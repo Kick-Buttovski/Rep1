@@ -1,7 +1,7 @@
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Scanner scanner = new Scanner(System.in); // Читаем введенное пользователем выражение
         System.out.println("Введите выражение:");
         String expression = scanner.nextLine();
@@ -9,66 +9,76 @@ public class Main {
         System.out.println(answer);
     }
 
-    public static String calc(String expression) {
+    public static String calc(String expression) throws Exception {
         // Разделяем выражение на три части составного массива
         String[] units = expression.split(" ");
 
-        // Проверяем выражение на соответствие формату - два операнда и один оператор (+, -, /, *)
-        if (units.length != 3) {
-            return "Ошибка: формат математической операции не удовлетворяет заданию - два операнда и один оператор (+, -, /, *)";
+        // Проверяем выражение на соответствие формату
+        if (units.length <= 2) {
+            throw new Exception("//т.к. строка не является математической операцией");
+        } else if (units.length != 3) {
+            throw new Exception("//формат математической операции не удовлетворяет заданию - два операнда и один оператор (+, -, /, *)");
         }
 
+        int a, b, answer;
+        String operator = units[1];
+
+        // В зависимости от цифр выражения присваиваем элементам числовые значения массива
+        if (isRomanNumber(units[0]) && isRomanNumber(units[2])) {
+            a = getRomanValue(units[0]);
+            b = getRomanValue(units[2]);
+        } else if (isDigit(units[0]) & isDigit(units[2])) {
+            a = Integer.parseInt(units[0]);
+            b = Integer.parseInt(units[2]);
+        } else if (isRomanNumber(units[0]) & isDigit(units[2]) || isDigit(units[0]) & isRomanNumber(units[2])) {
+            throw new Exception("//т.к. используются одновременно разные системы счисления");
+        } else {
+            throw new Exception("//неправильный ввод чисел");
+        }
+
+        // Проверка что цифры от 1 до 10 включительно
+        if (a < 1 || a > 10 || b < 1 || b > 10) {
+            throw new Exception("//для ввода допустимы римские или арабские числа от 1 до 10 включительно");
+        }
+
+        // Проводим арифметическую операцию в соответсвии с введенным оператором
+        switch (operator) {
+            case "+":
+                answer = a + b;
+                break;
+            case "-":
+                answer = a - b;
+                break;
+            case "*":
+                answer = a * b;
+                break;
+            case "/":
+                answer = a / b;
+                break;
+            default:
+                throw new Exception("//неправильный оператор");
+        }
+
+        // Выводим ответ в формате системы счисления введенного выражения
+        if (isRomanNumber(units[0]) && isRomanNumber(units[2])) {
+            // Если в римском выражении ответ меньше нуля, то выводим ошибку
+            if (answer < 1) {
+                throw new Exception("//т.к. в римской системе нет отрицательных чисел");
+            } else {
+                return toRomanNumber(Integer.toString(answer)); // Возвращаем ответ римского выражения
+            }
+        } else {
+            return Integer.toString(answer); // Возвращаем ответ арабского выражения
+        }
+    }
+
+    // Проверяем, что число целое арабское
+    private static boolean isDigit(String x) throws NumberFormatException {
         try {
-            // Исключение try catch, для того чтобы пользователь понимал какие цифры допустимы
-            int a, b, answer;
-            String operator = units[1];
-
-            // В зависимости от цифр выражения присваиваем элементам числовые значения массива
-            if (isRomanExpression(expression)) {
-                a = getRomanValue(units[0]);
-                b = getRomanValue(units[2]);
-            } else {
-                a = Integer.parseInt(units[0]);
-                b = Integer.parseInt(units[2]);
-            }
-
-            // Проверяем, что числа в диапазоне от 1 до 10
-            if (a < 1 || a > 10 || b < 1 || b > 10) {
-                return "Ошибка: допустимы числа от 1 до 10 включительно";
-            }
-
-            // Проводим арифметическую операцию в соответсвии с введенным оператором
-            switch (operator) {
-                case "+":
-                    answer = a + b;
-                    break;
-                case "-":
-                    answer = a - b;
-                    break;
-                case "*":
-                    answer = a * b;
-                    break;
-                case "/":
-                    answer = a / b;
-                    break;
-                default:
-                    return "Ошибка: неправильный оператор";
-            }
-
-            // Проверяем римское ли выражение
-            if (isRomanExpression(expression)) {
-                // Если ответ меньше нуля, то выдаем ошибку, иначе переводим ответ в римский формат
-                if (answer < 1) {
-                    return "Ошибка: В римской системе нет нуля и отрицательных чисел";
-                } else {
-                    return toRomanNumber(Integer.toString(answer));
-                }
-            } else {
-                return Integer.toString(answer); // Возвращаем ответ арабского выражения в виде строки
-            }
-
+            Integer.parseInt(x);
+            return true;
         } catch (NumberFormatException e) {
-            return "Ошибка: допустимы целые числа от 1 до 10 включительно, либо римские от I до X включительно";
+            return false;
         }
     }
 
@@ -80,12 +90,6 @@ public class Main {
         } catch (IllegalArgumentException e) {
             return false;
         }
-    }
-
-    // Проверяем, что выражение содержит только римские числа, используя функцию isRomanNumber
-    private static boolean isRomanExpression(String expression) {
-        String[] units = expression.split(" ");
-        return isRomanNumber(units[0]) && isRomanNumber(units[2]);
     }
 
     // Получение числового значения римского числа
